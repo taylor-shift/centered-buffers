@@ -6,7 +6,7 @@
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience, frames
-;; URL: https://github.com/taylor-shift
+;; URL: https://github.com/taylor-shift/centered-buffers
 
 ;;; Commentary:
 
