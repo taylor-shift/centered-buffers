@@ -3,7 +3,7 @@
 ;; Copyright (C) 2024 Luis Roel
 
 ;; Author: Luis Roel <luisroelsde@gmail.com.com>
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience, frames
 ;; URL: https://github.com/taylor-shift/centered-buffers
@@ -15,38 +15,29 @@
 ;; neck strain by keeping content centered.
 
 ;; To use, add (require 'centered-buffers) to your init file and bind
-;; `toggle-centered-buffers' to a convenient key.
+;; `centered-buffers-toggle-centered-buffers' to a convenient key.
 
 ;;; Code:
 
 (defvar centered-buffers-mode nil
   "Toggle for centered buffers mode.")
 
-(defvar-local centered-buffers-centered nil
-  "Whether this buffer is currently centered.")
-
 (defvar centered-buffers-original-display-buffer-alist nil
-  "Storage for the original \='display-buffer-alist'\=.")
+  "Storage for the original \='display-buffer-alist'.")
 
 (defun centered-buffers-center-windows ()
   "Center the side windows."
   (when centered-buffers-mode
-    (let* ((frame-width (frame-width))
+    (let* ((frame-width (frame-pixel-width))
            (buffer-width (/ frame-width 2))
            (margin (/ (- frame-width buffer-width) 2)))
       (dolist (window (window-list))
-        (with-current-buffer (window-buffer window)
-          (unless centered-buffers-centered
-            (set-window-margins window margin margin)
-            (setq centered-buffers-centered t)))))))
+        (set-window-margins window (/ margin (frame-char-width)) (/ margin (frame-char-width)))))))
 
 (defun centered-buffers-reset-windows ()
   "Reset window margins."
   (dolist (window (window-list))
-    (with-current-buffer (window-buffer window)
-      (when centered-buffers-centered
-        (set-window-margins window 0 0)
-        (setq centered-buffers-centered nil)))))
+    (set-window-margins window 0 0)))
 
 (defun centered-buffers-toggle-centered-buffers ()
   "Toggle the centered buffers mode."
@@ -67,14 +58,21 @@
            (window-width . 0.5))))
   (setq window-sides-vertical nil)
   (add-hook 'window-configuration-change-hook #'centered-buffers-center-windows)
+  (add-hook 'window-size-change-functions #'centered-buffers-handle-resize)
   (centered-buffers-center-windows))
 
 (defun centered-buffers-disable-centered-buffers ()
   "Disable centered buffers mode."
   (setq display-buffer-alist centered-buffers-original-display-buffer-alist)
   (remove-hook 'window-configuration-change-hook #'centered-buffers-center-windows)
+  (remove-hook 'window-size-change-functions #'centered-buffers-handle-resize)
   (centered-buffers-reset-windows)
   (balance-windows))
+
+(defun centered-buffers-handle-resize ()
+  "Handle window resize events for FRAME."
+  (when centered-buffers-mode
+    (centered-buffers-center-windows)))
 
 (provide 'centered-buffers)
 ;;; centered-buffers.el ends here
